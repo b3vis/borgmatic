@@ -1,6 +1,6 @@
 from flexmock import flexmock
 
-from atticmatic import command as module
+from atticmatic.backends import load as module
 
 
 def test_load_backend_with_atticmatic_command_should_return_attic_backend():

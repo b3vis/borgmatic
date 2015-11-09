@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 
-VERSION = '0.1.7'
+VERSION = '1.0.0'
 
 
 setup(
@@ -24,10 +24,16 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'atticmatic = atticmatic.command:main',
-            'borgmatic = atticmatic.command:main',
+            'atticmatic = atticmatic.commands.main:main [Attic]',
+            'atticmatic-config = atticmatic.commands.config:main [Attic]',
+            'borgmatic = atticmatic.commands.main:main [Borg]',
+            'borgmatic-config = atticmatic.commands.config:main [Borg]',
         ]
     },
+    extras_require = {'Attic': ['Attic'], 'Borg': ['borgbackup']},
+    install_requires=(
+        'ruamel.yaml',
+    ),
     tests_require=(
         'flexmock',
         'nose',

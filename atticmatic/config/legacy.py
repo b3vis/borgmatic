@@ -1,11 +1,10 @@
 from collections import OrderedDict, namedtuple
+from configparser import RawConfigParser
 
-try:
-    # Python 2
-    from ConfigParser import RawConfigParser
-except ImportError:
-    # Python 3
-    from configparser import RawConfigParser
+
+# This file includes support for the old Python configparser-based ini-style configuration file
+# format. atticmatic doesn't support it anymore, but atticmatic-config --upgrade can read it and
+# convert it to the new YAML-based format.
 
 
 Section_format = namedtuple('Section_format', ('name', 'options'))

@@ -1,14 +1,8 @@
-try:
-    # Python 2
-    from cStringIO import StringIO
-except ImportError:
-    # Python 3
-    from io import StringIO
-
 from collections import OrderedDict
+from io import StringIO
 import string
 
-from atticmatic import config as module
+from atticmatic.config import legacy as module
 
 
 def test_parse_section_options_with_punctuation_should_return_section_options():

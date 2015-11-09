@@ -3,7 +3,7 @@ from collections import OrderedDict
 from flexmock import flexmock
 from nose.tools import assert_raises
 
-from atticmatic import config as module
+from atticmatic.config import legacy as module
 
 
 def test_option_should_create_config_option():

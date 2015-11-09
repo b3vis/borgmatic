@@ -52,9 +52,14 @@ section of the Quick Start for more info.
 If the repository is on a remote host, make sure that your local root user has
 key-based ssh access to the desired user account on the remote host.
 
-To install atticmatic, run the following command to download and install it:
+To install atticmatic for use with Attic, run the following command to
+download and install it:
 
-    sudo pip install --upgrade atticmatic
+    sudo pip install --upgrade atticmatic[Attic]
+
+Or, to install atticmatic for use with Borg, install it like this:
+
+    sudo pip install --upgrade atticmatic[Borg]
 
 If you are using Attic, copy the following configuration files:
 

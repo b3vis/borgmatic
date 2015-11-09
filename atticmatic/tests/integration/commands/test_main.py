@@ -4,7 +4,7 @@ import sys
 from flexmock import flexmock
 from nose.tools import assert_raises
 
-from atticmatic import command as module
+from atticmatic.commands import main as module
 
 
 COMMAND_NAME = 'foomatic'

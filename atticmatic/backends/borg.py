@@ -1,11 +1,23 @@
+import sys
+
 from functools import partial
 
-from atticmatic.config import Section_format, option
+try:
+    from borg.archiver import Archiver, argparse
+except ImportError:
+    print('Error: Cannot import borg. Try: pip install borgbackup', file=sys.stderr)
+    sys.exit(1)
+
+from atticmatic.config.legacy import Section_format, option
 from atticmatic.backends import shared
+
 
 # An atticmatic backend that supports Borg for actually handling backups.
 
 COMMAND = 'borg'
+USAGE_DOCUMENTATION_URL = 'https://borgbackup.readthedocs.org/en/latest/usage.html'
+ARCHIVER_CLASS = Archiver
+ARGUMENT_PARSER_CLASS = argparse.ArgumentParser
 CONFIG_FORMAT = (
     shared.CONFIG_FORMAT[0],  # location
     Section_format(
@@ -24,7 +36,8 @@ CONFIG_FORMAT = (
         ),
     )
 )
-
+DEFAULT_CONFIG_FILENAME = '/etc/{}matic/config'.format(COMMAND)
+DEFAULT_EXCLUDES_FILENAME = '/etc/{}matic/excludes'.format(COMMAND)
 
 initialize = partial(shared.initialize, command=COMMAND)
 create_archive = partial(shared.create_archive, command=COMMAND)

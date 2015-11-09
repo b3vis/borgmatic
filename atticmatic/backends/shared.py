@@ -3,7 +3,7 @@ import os
 import platform
 import subprocess
 
-from atticmatic.config import Section_format, option
+from atticmatic.config.legacy import Section_format, option
 from atticmatic.verbosity import VERBOSITY_SOME, VERBOSITY_LOTS
 
 
