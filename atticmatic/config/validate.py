@@ -25,36 +25,39 @@ def yaml_error_position(error):
     Given a YAML scanner or parse error, return the line and column position where the problem
     occurred.
     '''
-
     return Position(error.problem_mark.line - 1, error.problem_mark.column - 1)
 
 
-def sub_command_position(config, sub_command_name):
+def option_position(config, argument_or_option_name, value_position=False):
     '''
-    Given a parsed config dict and the name of a backend sub-command, return its line and column
-    position in the configuration file.
-    '''
-    return Position(*config.lc.key(sub_command_name))
-
-
-def option_position(config, sub_command_name, argument_name, value_position=False):
-    '''
-    Given a parsed config dict, the name of a backend sub-command, and the name of an argument
-    within that sub-command, return the line and column position of the corresponding option name or
-    its value in the configuration file.
+    Given a portion of parsed config dict and an argument or option name in it, return its line
+    and column position in the configuration file. If value_position is True, then instead return
+    the position of the corresponding value.
     '''
     key_or_value = 'value' if value_position else 'key'
 
-    option_name = command_argument_to_config_option(argument_name)
-    position_function = getattr(config[sub_command_name].lc, key_or_value)
+    option_name = command_argument_to_config_option(argument_or_option_name)
+    position_function = getattr(config.lc, key_or_value)
 
     try:
         return Position(*position_function(option_name))
-    except:
-        return Position(*position_function(argument_name))
+    except KeyError:
+        if argument_or_option_name == option_name:
+            return None
+        return Position(*position_function(argument_or_option_name))
 
 
 def argument_error_message(config_filename, error_position, error_message):
+    '''
+    Format a configuration error message as a user-friendly string explaining the error and its
+    position in the source configuration file.
+    '''
+    if error_position is None:
+        return '\n'.join((
+            'File "{}":'.format(config_filename),
+            clean_backend_error_message(error_message),
+        ))
+
     bad_line = open(config_filename).readlines()[error_position.line_number]
 
     return '\n'.join((
@@ -149,6 +152,44 @@ def sub_command_options_to_command_arguments(options):
     )
 
 
+def validate_global_options(config, config_filename):
+    '''
+    Given parsed configuration data for source directories and the repository to use, validate
+    whether they're correctly formatted. Return a copy of the config dict without the validated
+    global options present.
+
+    Raise a ConfigurationError if anything is amiss.
+    '''
+    # TODO: This would be nicer if working off a declarative data like the legacy config parser does.
+    source_directories = config.get('source_directories')
+    repository = config.get('repository')
+
+    if not source_directories:
+        raise Configuration_error(
+            config_filename,
+            error_position=option_position(config, 'source_directories'),
+            error_message='Missing required option: "source_directories"',
+        )
+    if not repository:
+        raise Configuration_error(
+            config_filename,
+            error_position=None,
+            error_message='Missing required option: "repository"',
+        )
+
+    if not isinstance(source_directories, list) or len(source_directories) == 0:
+        raise Configuration_error(
+            config_filename,
+            option_position(config, 'source_directories', value_position=True),
+            'Invalid value',
+        )
+
+    return {
+        option_name: value for (option_name, value) in config.items()
+        if option_name not in ('source_directories', 'repository')
+    }
+
+
 def validate_config_file(backend, config_filename):
     '''
     Given an atticmatic backend and a configuration filename, validate the file and return the
@@ -157,9 +198,8 @@ def validate_config_file(backend, config_filename):
     Raise an IOError/PermissionError if something file-related goes wrong, or raise a
     Configuration_error if something is wrong with the contents of the file itself.
     '''
-    config = load_config_file(config_filename)
-    if not config:
-        return
+    whole_config = load_config_file(config_filename)
+    config = validate_global_options(whole_config, config_filename)
 
     parser = capture_argument_parser(backend.ARCHIVER_CLASS, backend.ARGUMENT_PARSER_CLASS)
 
@@ -180,7 +220,7 @@ def validate_config_file(backend, config_filename):
             if not additional_args:
                 raise Configuration_error(
                     config_filename,
-                    sub_command_position(config, sub_command_name),
+                    option_position(config, sub_command_name),
                     'Unknown section',
                 )
 
@@ -192,13 +232,13 @@ def validate_config_file(backend, config_filename):
             if argv:
                 raise Configuration_error(
                     config_filename,
-                    option_position(config, sub_command_name, argv[0]),
+                    option_position(config[sub_command_name], argv[0]),
                     'Unknown option',
                 )
         except Option_looks_like_argument_error as error:
             raise Configuration_error(
                 config_filename,
-                option_position(config, sub_command_name, error.argument_name),
+                option_position(config[sub_command_name], error.argument_name),
                 error.message,
             )
         except Exception as error:
@@ -207,6 +247,6 @@ def validate_config_file(backend, config_filename):
 
             raise Configuration_error(
                 config_filename,
-                option_position(config, sub_command_name, error.argument_name, value_position=True),
+                option_position(config[sub_command_name], error.argument_name, value_position=True),
                 error.message,
             )
